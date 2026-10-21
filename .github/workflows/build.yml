@@ -9,37 +9,58 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify custom source archive
+        run: |
+          set -euo pipefail
+          test -f src/turnip_dark_v1.2_source.zip
+          unzip -tq src/turnip_dark_v1.2_source.zip
 
       - name: Download Mesa Source
         run: |
-          curl -fL --retry 3 -o mesa-24.3.4.zip https://github.com/mesa3d/mesa/archive/refs/tags/mesa-24.3.4.zip
-          file mesa-24.3.4.zip | grep -q "Zip archive"
+          set -euo pipefail
+          ok=0
+          for url in \
+            "https://github.com/mesa3d/mesa/archive/refs/tags/mesa-24.3.4.zip" \
+            "https://codeload.github.com/mesa3d/mesa/zip/refs/tags/mesa-24.3.4"; do
+            rm -f mesa-24.3.4.zip
+            if curl -fL --retry 3 --retry-delay 5 -o mesa-24.3.4.zip "$url" && unzip -tq mesa-24.3.4.zip >/dev/null 2>&1; then
+              ok=1
+              break
+            fi
+          done
+          test "$ok" = "1"
           unzip -q mesa-24.3.4.zip
-          ls -d mesa-mesa-24.3.4
+          test -d mesa-mesa-24.3.4
 
       - name: Apply Turnip Dark sources
         run: |
+          set -euo pipefail
           cd src
           unzip -q -o turnip_dark_v1.2_source.zip
+          test -d freedreno
           cd ..
           rm -rf mesa-mesa-24.3.4/src/freedreno
           cp -r src/freedreno mesa-mesa-24.3.4/src/freedreno
 
       - name: Install dependencies
         run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build python3-mako python3-yaml glslang-tools bison flex pkg-config zip
-          pip install --break-system-packages meson mako
+          sudo apt-get install -y ninja-build python3-pip python3-mako python3-yaml python3-ply glslang-tools bison flex pkg-config zip
+          pip install --break-system-packages meson mako pyyaml
 
       - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1
         id: ndk
+        uses: nttld/setup-ndk@v1
         with:
           ndk-version: r27c
 
       - name: Create cross file
         run: |
+          set -euo pipefail
           T=${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin
           cat > android-aarch64.txt <<EOF
           [binaries]
@@ -55,18 +76,24 @@ jobs:
           endian = 'little'
           EOF
 
-      - name: Build
+      - name: Configure and build
         run: |
+          set -euo pipefail
           cd mesa-mesa-24.3.4
           meson setup build --cross-file ../android-aarch64.txt -Dbuildtype=release -Dplatforms=android -Dplatform-sdk-version=29 -Dandroid-stub=true -Dandroid-libbacktrace=disabled -Dgallium-drivers= -Dvulkan-drivers=freedreno -Dfreedreno-kmds=kgsl -Dglx=disabled -Degl=disabled -Dllvm=disabled -Dzstd=disabled
           ninja -C build src/freedreno/vulkan/libvulkan_freedreno.so
+          test -f build/src/freedreno/vulkan/libvulkan_freedreno.so
 
       - name: Package
         run: |
+          set -euo pipefail
           cp mesa-mesa-24.3.4/build/src/freedreno/vulkan/libvulkan_freedreno.so vulkan.dark.so
           zip vulkan.dark.zip vulkan.dark.so
+          unzip -l vulkan.dark.zip
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: turnip-dark
           path: vulkan.dark.zip
+          if-no-files-found: error
