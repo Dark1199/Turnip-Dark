@@ -1,0 +1,65 @@
+name: Build Turnip Dark v1.2
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build_driver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build python3-mako libxml2-dev libexpat1-dev libzstd-dev bison flex zip
+
+      - name: Download Mesa Source
+        run: |
+          wget https://freedesktop.org
+          tar -xzf mesa-mesa-24.3.4.tar.gz
+          mv mesa-mesa-24.3.4 mesa_src
+
+      - name: Inject Custom Code Modifications
+        run: |
+          if [ -d "src" ]; then
+            cp -r src/* mesa_src/src/
+          fi
+
+      - name: Configure Meson for Android
+        run: |
+          cd mesa_src
+          meson setup build/ \
+            --buildtype=release \
+            -Dplatforms=android \
+            -Dgallium-drivers= \
+            -Dvulkan-drivers=freedreno \
+            -Dfreedreno-kmd=msm \
+            -Dbuild-bcl=disabled \
+            -Dglx=disabled \
+            -Dgbm=disabled \
+            -Degl=disabled \
+            -Dgles1=disabled \
+            -Dgles2=disabled \
+            -Dshared-glapi=disabled \
+            -Dllvm=disabled
+
+      - name: Compile Vulkan Driver with Ninja
+        run: |
+          cd mesa_src/build
+          ninja
+
+      - name: Compress Driver Into Ready Zip File
+        run: |
+          cd mesa_src/build/src/freedreno/vulkan/
+          mv libvulkan_freedreno.so vulkan.dark.so
+          zip -r ../../../../../vulkan.dark.zip vulkan.dark.so
+
+      - name: Upload Compiled Driver Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: Turnip-Dark-v1.2-Ready
+          path: vulkan.dark.zip
