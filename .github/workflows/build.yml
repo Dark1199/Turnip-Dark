@@ -51,17 +51,12 @@ jobs:
           test -d freedreno
           cd ..
           
-          echo "=== جاري تشغيل أداة الإصلاح التلقائي على ملف tu_cmd_buffer.cc ==="
-          # استبدال شامل لكل الأشكال المحتملة للمصفوفات الديناميكية وتحويلها لحجم ثابت
+          echo "=== جاري تشغيل أداة الإصلاح الدقيقة لملف tu_cmd_buffer.cc ==="
+          # استبدال دقيق ومباشر لتعريفات المصفوفات فقط لمنع أخطاء VLA دون المساس بـ Loops
           sed -i 's/struct tu_frag_area raw_areas\[views\]/struct tu_frag_area raw_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
           sed -i 's/VkExtent2D frag_areas\[views\]/VkExtent2D frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
           sed -i 's/VkExtent2D unscaled_frag_areas\[num_views\]/VkExtent2D unscaled_frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
-          
-          # خطوة احتياطية لإصلاح أي سياق متبقي في الأسطر القريبة لتجنب تعارض الـ Loops
-          sed -i 's/raw_areas\[views\]/raw_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
-          sed -i 's/frag_areas\[views\]/frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
-          sed -i 's/unscaled_frag_areas\[num_views\]/unscaled_frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
-          echo "=== تم الإصلاح التلقائي بنجاح ==="
+          echo "=== تم الإصلاح التلقائي الموجه بنجاح ==="
 
           rm -rf mesa-mesa-24.3.4/src/freedreno
           cp -r src/freedreno mesa-mesa-24.3.4/src/freedreno
