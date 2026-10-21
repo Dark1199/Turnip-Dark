@@ -1,9 +1,9 @@
 name: Build Turnip Dark
 
 on:
-  workflow_dispatch: # يتيح لك تشغيل البناء يدوياً بضغطة زر
+  workflow_dispatch:
   push:
-    branches: [ "main" ] # يبدأ التجميع فوراً بمجرد حفظ الملف
+    branches: [main]
 
 jobs:
   build:
@@ -13,29 +13,23 @@ jobs:
 
       - name: Download Mesa Source
         run: |
-          curl -fL --retry 3 -o mesa-24.3.4.zip \
-            https://mesa3d.org
+          curl -fL --retry 3 -o mesa-24.3.4.zip https://github.com/mesa3d/mesa/archive/refs/tags/mesa-24.3.4.zip
           file mesa-24.3.4.zip | grep -q "Zip archive"
           unzip -q mesa-24.3.4.zip
-          ls -d mesa-24.3.4
+          ls -d mesa-mesa-24.3.4
 
       - name: Apply Turnip Dark sources
         run: |
-          # فك ضغط ملف التعديلات التابع لك المتواجد داخل مجلد src ودمجه
-          if [ -f "src/turnip_dark_v1.2_source.zip" ]; then
-            cd src
-            unzip -q turnip_dark_v1.2_source.zip
-            rm turnip_dark_v1.2_source.zip
-            cd ..
-            rm -rf mesa-24.3.4/src/freedreno
-            cp -r src/freedreno mesa-24.3.4/src/freedreno
-          fi
+          cd src
+          unzip -q -o turnip_dark_v1.2_source.zip
+          cd ..
+          rm -rf mesa-mesa-24.3.4/src/freedreno
+          cp -r src/freedreno mesa-mesa-24.3.4/src/freedreno
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build python3-mako python3-yaml \
-            glslang-tools bison flex pkg-config zip
+          sudo apt-get install -y meson ninja-build python3-mako python3-yaml glslang-tools bison flex pkg-config zip
           pip install --break-system-packages meson mako
 
       - name: Setup Android NDK
@@ -63,23 +57,16 @@ jobs:
 
       - name: Build
         run: |
-          cd mesa-24.3.4
-          meson setup build --cross-file ../android-aarch64.txt \
-            -Dbuildtype=release -Dplatforms=android -Dplatform-sdk-version=29 \
-            -Dandroid-stub=true -Dandroid-libbacktrace=disabled \
-            -Dgallium-drivers= -Dvulkan-drivers=freedreno \
-            -Dfreedreno-kmds=kgsl -Dglx=disabled -Degl=disabled \
-            -Dllvm=disabled -Dzstd=disabled
+          cd mesa-mesa-24.3.4
+          meson setup build --cross-file ../android-aarch64.txt -Dbuildtype=release -Dplatforms=android -Dplatform-sdk-version=29 -Dandroid-stub=true -Dandroid-libbacktrace=disabled -Dgallium-drivers= -Dvulkan-drivers=freedreno -Dfreedreno-kmds=kgsl -Dglx=disabled -Degl=disabled -Dllvm=disabled -Dzstd=disabled
           ninja -C build src/freedreno/vulkan/libvulkan_freedreno.so
 
-      - name: Rename and Pack Driver Zip
+      - name: Package
         run: |
-          # إعادة تسمية الملف وحفظه داخل ملف zip جاهز ومباشر
-          cd mesa-24.3.4/build/src/freedreno/vulkan/
-          mv libvulkan_freedreno.so vulkan.dark.so
-          zip -r ../../../../../vulkan.dark.zip vulkan.dark.so
+          cp mesa-mesa-24.3.4/build/src/freedreno/vulkan/libvulkan_freedreno.so vulkan.dark.so
+          zip vulkan.dark.zip vulkan.dark.so
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Turnip-Dark-v1.2-Ready
+          name: turnip-dark
           path: vulkan.dark.zip
