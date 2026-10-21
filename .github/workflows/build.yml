@@ -1,9 +1,9 @@
 name: Build Turnip Dark
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # يتيح لك تشغيل البناء يدوياً بضغطة زر
   push:
-    paths: ["freedreno/**"]
+    branches: [ "main" ] # يبدأ التجميع فوراً بمجرد حفظ الملف
 
 jobs:
   build:
@@ -14,16 +14,22 @@ jobs:
       - name: Download Mesa Source
         run: |
           curl -fL --retry 3 -o mesa-24.3.4.zip \
-            https://github.com/mesa3d/mesa/archive/refs/tags/mesa-24.3.4.zip
-          # fail early if we did not get a real zip (e.g. an HTML page)
+            https://mesa3d.org
           file mesa-24.3.4.zip | grep -q "Zip archive"
           unzip -q mesa-24.3.4.zip
-          ls -d mesa-mesa-24.3.4
+          ls -d mesa-24.3.4
 
       - name: Apply Turnip Dark sources
         run: |
-          rm -rf mesa-mesa-24.3.4/src/freedreno
-          cp -r freedreno mesa-mesa-24.3.4/src/freedreno
+          # فك ضغط ملف التعديلات التابع لك المتواجد داخل مجلد src ودمجه
+          if [ -f "src/turnip_dark_v1.2_source.zip" ]; then
+            cd src
+            unzip -q turnip_dark_v1.2_source.zip
+            rm turnip_dark_v1.2_source.zip
+            cd ..
+            rm -rf mesa-24.3.4/src/freedreno
+            cp -r src/freedreno mesa-24.3.4/src/freedreno
+          fi
 
       - name: Install dependencies
         run: |
@@ -57,7 +63,7 @@ jobs:
 
       - name: Build
         run: |
-          cd mesa-mesa-24.3.4
+          cd mesa-24.3.4
           meson setup build --cross-file ../android-aarch64.txt \
             -Dbuildtype=release -Dplatforms=android -Dplatform-sdk-version=29 \
             -Dandroid-stub=true -Dandroid-libbacktrace=disabled \
@@ -66,7 +72,14 @@ jobs:
             -Dllvm=disabled -Dzstd=disabled
           ninja -C build src/freedreno/vulkan/libvulkan_freedreno.so
 
+      - name: Rename and Pack Driver Zip
+        run: |
+          # إعادة تسمية الملف وحفظه داخل ملف zip جاهز ومباشر
+          cd mesa-24.3.4/build/src/freedreno/vulkan/
+          mv libvulkan_freedreno.so vulkan.dark.so
+          zip -r ../../../../../vulkan.dark.zip vulkan.dark.so
+
       - uses: actions/upload-artifact@v4
         with:
-          name: turnip-dark
-          path: mesa-mesa-24.3.4/build/src/freedreno/vulkan/libvulkan_freedreno.so
+          name: Turnip-Dark-v1.2-Ready
+          path: vulkan.dark.zip
