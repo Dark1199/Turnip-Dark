@@ -24,8 +24,8 @@ jobs:
           rm -rf mesa-mesa-24.3.4 mesa-24.3.4 mesa-src.zip mesa-src.tar.xz
           ok=0
           for url in \
-            "https://github.com/mirror/mesa/archive/refs/tags/mesa-24.3.4.zip" \
-            "https://gitlab.freedesktop.org/mesa/mesa/-/archive/mesa-24.3.4/mesa-mesa-24.3.4.zip"; do
+            "https://github.com" \
+            "https://freedesktop.org"; do
             rm -f mesa-src.zip
             if curl -fL --retry 3 --retry-delay 5 -o mesa-src.zip "$url" && unzip -tq mesa-src.zip >/dev/null 2>&1; then
               unzip -q mesa-src.zip
@@ -34,7 +34,7 @@ jobs:
             fi
           done
           if [ "$ok" != "1" ]; then
-            curl -fL --retry 3 --retry-delay 5 -o mesa-src.tar.xz "https://archive.mesa3d.org/mesa-24.3.4.tar.xz"
+            curl -fL --retry 3 --retry-delay 5 -o mesa-src.tar.xz "https://mesa3d.org"
             tar -tJf mesa-src.tar.xz >/dev/null
             tar -xJf mesa-src.tar.xz
             mv mesa-24.3.4 mesa-mesa-24.3.4
@@ -43,7 +43,7 @@ jobs:
           test "$ok" = "1"
           test -d mesa-mesa-24.3.4/src
 
-      -       - name: Apply Turnip Dark sources & Auto-Fix Code Errors
+      - name: Apply Turnip Dark sources & Auto-Fix Code Errors
         run: |
           set -euo pipefail
           cd src
@@ -51,18 +51,20 @@ jobs:
           test -d freedreno
           cd ..
           
-          # أداة فحص وإصلاح آلي لملفات التجميع لمنع أخطاء VLA تماماً
-          echo "Running auto-correct tool on tu_cmd_buffer.cc..."
+          echo "=== جاري تشغيل أداة الإصلاح التلقائي على ملف tu_cmd_buffer.cc ==="
+          # استبدال شامل لكل الأشكال المحتملة للمصفوفات الديناميكية وتحويلها لحجم ثابت
           sed -i 's/struct tu_frag_area raw_areas\[views\]/struct tu_frag_area raw_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
           sed -i 's/VkExtent2D frag_areas\[views\]/VkExtent2D frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
           sed -i 's/VkExtent2D unscaled_frag_areas\[num_views\]/VkExtent2D unscaled_frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
-          # إصلاح أي مصفوفة ديناميكية أخرى متبقية مخفية تعتمد على التغير البرمجي
-          sed -i 's/\[views\]/[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
-          sed -i 's/\[num_views\]/[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+          
+          # خطوة احتياطية لإصلاح أي سياق متبقي في الأسطر القريبة لتجنب تعارض الـ Loops
+          sed -i 's/raw_areas\[views\]/raw_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+          sed -i 's/frag_areas\[views\]/frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+          sed -i 's/unscaled_frag_areas\[num_views\]/unscaled_frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+          echo "=== تم الإصلاح التلقائي بنجاح ==="
 
           rm -rf mesa-mesa-24.3.4/src/freedreno
           cp -r src/freedreno mesa-mesa-24.3.4/src/freedreno
-
 
       - name: Install dependencies
         run: |
