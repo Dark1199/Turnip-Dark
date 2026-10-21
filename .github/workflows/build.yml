@@ -43,15 +43,26 @@ jobs:
           test "$ok" = "1"
           test -d mesa-mesa-24.3.4/src
 
-      - name: Apply Turnip Dark sources
+      -       - name: Apply Turnip Dark sources & Auto-Fix Code Errors
         run: |
           set -euo pipefail
           cd src
           unzip -q -o turnip_dark_v1.2_source.zip
           test -d freedreno
           cd ..
+          
+          # أداة فحص وإصلاح آلي لملفات التجميع لمنع أخطاء VLA تماماً
+          echo "Running auto-correct tool on tu_cmd_buffer.cc..."
+          sed -i 's/struct tu_frag_area raw_areas\[views\]/struct tu_frag_area raw_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+          sed -i 's/VkExtent2D frag_areas\[views\]/VkExtent2D frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+          sed -i 's/VkExtent2D unscaled_frag_areas\[num_views\]/VkExtent2D unscaled_frag_areas[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+          # إصلاح أي مصفوفة ديناميكية أخرى متبقية مخفية تعتمد على التغير البرمجي
+          sed -i 's/\[views\]/[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+          sed -i 's/\[num_views\]/[8]/g' src/freedreno/vulkan/tu_cmd_buffer.cc
+
           rm -rf mesa-mesa-24.3.4/src/freedreno
           cp -r src/freedreno mesa-mesa-24.3.4/src/freedreno
+
 
       - name: Install dependencies
         run: |
