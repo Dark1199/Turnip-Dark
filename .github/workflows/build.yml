@@ -87,11 +87,13 @@ jobs:
       - name: Configure and build
         run: |
           set -euo pipefail
+          mkdir -p "$PWD/empty-pkgconfig"
+          export PKG_CONFIG_LIBDIR="$PWD/empty-pkgconfig"
+          export PKG_CONFIG_PATH=""
           cd mesa-mesa-24.3.4
-          meson setup build --cross-file ../android-aarch64.txt -Dbuildtype=release -Dplatforms=android -Dplatform-sdk-version=29 -Dandroid-stub=true -Dandroid-libbacktrace=disabled -Dgallium-drivers= -Dvulkan-drivers=freedreno -Dfreedreno-kmds=kgsl -Dglx=disabled -Degl=disabled -Dllvm=disabled -Dzstd=disabled
+          meson setup build --cross-file ../android-aarch64.txt -Dbuildtype=release -Dplatforms=android -Dplatform-sdk-version=29 -Dandroid-stub=true -Dandroid-libbacktrace=disabled -Dgallium-drivers= -Dvulkan-drivers=freedreno -Dfreedreno-kmds=kgsl -Dglx=disabled -Degl=disabled -Dllvm=disabled -Dzstd=disabled -Dwrap_mode=default
           ninja -C build src/freedreno/vulkan/libvulkan_freedreno.so
           test -f build/src/freedreno/vulkan/libvulkan_freedreno.so
-
       - name: Package
         run: |
           set -euo pipefail
