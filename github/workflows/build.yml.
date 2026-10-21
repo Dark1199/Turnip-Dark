@@ -15,7 +15,7 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build python3-mako libxml2-dev libexpat1-dev libzstd-dev bison flex zip
+          sudo apt-get install -y meson ninja-build python3-mako libxml2-dev libexpat1-dev libzstd-dev bison flex zip unzip
 
       - name: Download Mesa Source
         run: |
@@ -25,7 +25,12 @@ jobs:
 
       - name: Inject Custom Code Modifications
         run: |
-          if [ -d "src" ]; then
+          # فك ضغط ملف التعديلات المرفوع سحابياً ودمجه داخل السيرفر
+          if [ -f "src/turnip_dark_v1.2_source.zip" ]; then
+            cd src
+            unzip turnip_dark_v1.2_source.zip
+            rm turnip_dark_v1.2_source.zip
+            cd ..
             cp -r src/* mesa_src/src/
           fi
 
