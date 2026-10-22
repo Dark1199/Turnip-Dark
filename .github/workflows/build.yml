@@ -15,8 +15,8 @@ jobs:
       - name: Verify custom source archive
         run: |
           set -euo pipefail
-          test -f src/turnip_dark_v0.0.1_source.zip
-          unzip -tq src/turnip_dark_v0.0.1_source.zip
+          test -f src/turnip_dark_v0.0.2_source.zip
+          unzip -tq src/turnip_dark_v0.0.2_source.zip
 
       - name: Download Mesa Source
         run: |
@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           cd src
-          unzip -q -o turnip_dark_v0.0.1_source.zip
+          unzip -q -o turnip_dark_v0.0.2_source.zip
           test -d freedreno
           cd ..
           rm -rf mesa-mesa-24.3.4/src/freedreno
