@@ -15,8 +15,8 @@ jobs:
       - name: Verify custom source archive
         run: |
           set -euo pipefail
-          test -f src/turnip_dark_v0.0.2_source.zip
-          unzip -tq src/turnip_dark_v0.0.2_source.zip
+          test -f src/turnip_dark_v0.0.3_A_base_source.zip
+          unzip -tq src/turnip_dark_v0.0.3_A_base_source.zip
 
       - name: Download Mesa Source
         run: |
@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           cd src
-          unzip -q -o turnip_dark_v0.0.2_source.zip
+          unzip -q -o turnip_dark_v0.0.3_A_base_source.zip
           test -d freedreno
           cd ..
           rm -rf mesa-mesa-24.3.4/src/freedreno
@@ -75,7 +75,7 @@ jobs:
           ar = '$T/llvm-ar'
           c = ['$T/aarch64-linux-android29-clang']
           cpp = ['$T/aarch64-linux-android29-clang++', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
-          strip = '$T/llvm-strip'
+          remove = '$T/llvm-strip'
           pkg-config = '/usr/bin/pkg-config'
           [host_machine]
           system = 'android'
