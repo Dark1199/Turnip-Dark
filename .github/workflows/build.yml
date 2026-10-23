@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 env:
-  SRC_ZIP: turnip_dark_v0.0.3_C_gmem_source.zip
+  SRC_ZIP: turnip_dark_v0.0.3_D_nolrz_source.zip
 
 jobs:
   build:
