@@ -1,4 +1,4 @@
-name: Build Turnip Dark VH
+name: Build Turnip Dark
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 env:
-  SRC_ZIP: turnip_dark_v0.0.3_H_sysmem_syncdraw_source.zip
+  SRC_ZIP: turnip_dark_v0.0.3_I_sysmem_noubwc_hiprio_source.zip
 
 jobs:
   build:
