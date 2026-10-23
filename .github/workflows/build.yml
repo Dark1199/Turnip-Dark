@@ -1,4 +1,4 @@
-name: Build Turnip Dark
+name: Build Turnip Dark Variant B
 
 on:
   workflow_dispatch:
@@ -15,8 +15,8 @@ jobs:
       - name: Verify custom source archive
         run: |
           set -euo pipefail
-          test -f src/turnip_dark_v0.0.3_A_base_source.zip
-          unzip -tq src/turnip_dark_v0.0.3_A_base_source.zip
+          test -f src/turnip_dark_v0.0.3_B_sysmem_source.zip
+          unzip -tq src/turnip_dark_v0.0.3_B_sysmem_source.zip
 
       - name: Download Mesa Source
         run: |
@@ -24,8 +24,8 @@ jobs:
           rm -rf mesa-mesa-24.3.4 mesa-24.3.4 mesa-src.zip mesa-src.tar.xz
           ok=0
           for url in \
-            "https://github.com/mirror/mesa/archive/refs/tags/mesa-24.3.4.zip" \
-            "https://gitlab.freedesktop.org/mesa/mesa/-/archive/mesa-24.3.4/mesa-mesa-24.3.4.zip"; do
+            "https://github.com" \
+            "https://freedesktop.org"; do
             rm -f mesa-src.zip
             if curl -fL --retry 3 --retry-delay 5 -o mesa-src.zip "$url" && unzip -tq mesa-src.zip >/dev/null 2>&1; then
               unzip -q mesa-src.zip
@@ -34,24 +34,24 @@ jobs:
             fi
           done
           if [ "$ok" != "1" ]; then
-            curl -fL --retry 3 --retry-delay 5 -o mesa-src.tar.xz "https://archive.mesa3d.org/mesa-24.3.4.tar.xz"
+            curl -fL --retry 3 --retry-delay 5 -o mesa-src.tar.xz "https://mesa3d.org"
             tar -tJf mesa-src.tar.xz >/dev/null
             tar -xJf mesa-src.tar.xz
-            mv mesa-24.3.4 mesa-mesa-24.3.4
+            mv mesa-24.3.4 mesa-24.3.4
             ok=1
           fi
           test "$ok" = "1"
-          test -d mesa-mesa-24.3.4/src
+          test -d mesa-24.3.4/src
 
       - name: Apply Turnip Dark sources
         run: |
           set -euo pipefail
           cd src
-          unzip -q -o turnip_dark_v0.0.3_A_base_source.zip
+          unzip -q -o turnip_dark_v0.0.3_B_sysmem_source.zip
           test -d freedreno
           cd ..
-          rm -rf mesa-mesa-24.3.4/src/freedreno
-          cp -r src/freedreno mesa-mesa-24.3.4/src/freedreno
+          rm -rf mesa-24.3.4/src/freedreno
+          cp -r src/freedreno mesa-24.3.4/src/freedreno
 
       - name: Install dependencies
         run: |
@@ -75,7 +75,7 @@ jobs:
           ar = '$T/llvm-ar'
           c = ['$T/aarch64-linux-android29-clang']
           cpp = ['$T/aarch64-linux-android29-clang++', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
-          remove = '$T/llvm-strip'
+          strip = '$T/llvm-strip'
           pkg-config = '/usr/bin/pkg-config'
           [host_machine]
           system = 'android'
@@ -98,7 +98,7 @@ jobs:
           mkdir -p "$WS/empty-pkgconfig"
           export PKG_CONFIG_LIBDIR="$WS/empty-pkgconfig"
           export PKG_CONFIG_PATH=""
-          cd "$WS/mesa-mesa-24.3.4"
+          cd "$WS/mesa-24.3.4"
           EXTRA=()
           ATTEMPT=1
           while [ "$ATTEMPT" -le 3 ]; do
@@ -172,13 +172,13 @@ jobs:
       - name: Package
         run: |
           set -euo pipefail
-          cp mesa-mesa-24.3.4/build/src/freedreno/vulkan/libvulkan_freedreno.so vulkan.dark.so
+          cp mesa-24.3.4/build/src/freedreno/vulkan/libvulkan_freedreno.so vulkan.dark.so
           zip vulkan.dark.zip vulkan.dark.so
           unzip -l vulkan.dark.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: turnip-dark
+          name: turnip-dark-B
           path: vulkan.dark.zip
           if-no-files-found: error
