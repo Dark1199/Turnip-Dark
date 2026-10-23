@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 env:
-  SRC_ZIP: turnip_dark_v0.0.3_F_sysmem_sync_source.zip
+  SRC_ZIP: turnip_dark_v0.0.3_G_sysmem_safe_source.zip
 
 jobs:
   build:
