@@ -1,4 +1,4 @@
-name: Build Turnip Dark Variant B
+name: Build Turnip Dark Variant C
 
 on:
   workflow_dispatch:
@@ -15,8 +15,8 @@ jobs:
       - name: Verify custom source archive
         run: |
           set -euo pipefail
-          test -f src/turnip_dark_v0.0.3_B_sysmem_source.zip
-          unzip -tq src/turnip_dark_v0.0.3_B_sysmem_source.zip
+          test -f src/turnip_dark_v0.0.3_C_gmem_source.zip
+          unzip -tq src/turnip_dark_v0.0.3_C_gmem_source.zip
 
       - name: Download Mesa Source
         run: |
@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           cd src
-          unzip -q -o turnip_dark_v0.0.3_B_sysmem_source.zip
+          unzip -q -o turnip_dark_v0.0.3_C_gmem_source.zip
           test -d freedreno
           cd ..
           rm -rf mesa-24.3.4/src/freedreno
@@ -179,6 +179,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: turnip-dark-B
+          name: turnip-dark-C
           path: vulkan.dark.zip
           if-no-files-found: error
