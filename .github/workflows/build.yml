@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 env:
-  SRC_ZIP: turnip_dark_v0.0.3_I_sysmem_noubwc_hiprio_source.zip
+  SRC_ZIP: turnip_dark_v0.0.3_stable_source.zip
 
 jobs:
   build:
